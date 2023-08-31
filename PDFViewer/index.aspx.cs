@@ -16,10 +16,9 @@ namespace PDFViewer
 
         protected void btnOpenPdf_Click(object sender, EventArgs e)
         {
-            string pdfPath = "PDFs/test2.pdf"; // Calea către fișierul PDF
-           // string pdfPath = "compressed.tracemonkey-pldi-09.pdf";
+            string pdfPath = "file.aspx?id=10"; // Calea către fișierul PDF
+            //string pdfPath = "compressed.tracemonkey-pldi-09.pdf";
             string url = "previzualizare.aspx?pdf=" + Server.UrlEncode(pdfPath);
-            //string url = "previzualizare.aspx";
             string script = string.Format("window.open('{0}', '_blank');", url);
             ScriptManager.RegisterStartupScript(this, this.GetType(), "OpenPDF", script, true);
         }
