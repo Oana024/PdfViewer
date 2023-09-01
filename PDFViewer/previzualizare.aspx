@@ -56,7 +56,8 @@
                         console.log(textContent);
 
                     //    // Render PDF page
-                        page.render(renderContext)
+                        var renderTask = page.render(renderContext);
+                        renderTask.promise
                             .then(function () {
                                 console.log("222222");
                             // Get text-fragments
