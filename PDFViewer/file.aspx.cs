@@ -11,16 +11,12 @@ namespace PDFViewer
     {
         protected void Page_Load(object sender, EventArgs e)
         {
-            var id = Request.QueryString["id"];
-            if(id == "10")
-            {
                 Response.Clear();
                 Response.WriteFile(@"C:\Users\ioana.mocanu\Downloads\test.pdf");
-                Response.ContentType = "application/octet-stream";
+                Response.ContentType = "application/pdf";
                 var contentDisposition = "attachment; filename=file.pdf";
                 Response.Headers["Content-Disposition"] = contentDisposition;
                 Response.End();
-            }
         }
     }
 }
