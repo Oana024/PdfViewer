@@ -3,19 +3,53 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
    <title>Previzualizare PDF</title>
+    <style type="text/css">
+        body{
+        margin: 0; /* Remove default margin */
+    }
+    iframe{      
+        display: block;  /* iframes are inline by default */   
+        height: 100vh;  /* Set height to 100% of the viewport height */   
+        width: 100vw;  /* Set width to 100% of the viewport width */     
+        border: none; /* Remove default border */
+        background: lightyellow; /* Just for styling */
+    }
+        }
+    </style>
     <%--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf_viewer.css"/>--%>
     <link type="text/css" href="PDFjs/text_layer_builder.css" rel="stylesheet"/>
-    <script type="text/javascript" src="PDFjs/text_layer_builder.js"></script>
+    <%--<script type="text/javascript" src="PDFjs/text_layer.js"></script>--%>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.10.111/pdf.js"></script>
+</head>
+<body>
+    <form id="form1" runat="server">
+        <%--<iframe src="PDFs/test1.pdf"></iframe>--%>
+       <div id="pdfContainer"></div>
+        <%--<div class="textLayer"></div>--%>
+    </form>
+
+
     <script>
+
+        //var pdfDoc = null,
+        //    pageNum = 1,
+        //    //pageRendering = false,
+        //    pageNumPending = null,
+        //    //scale = 0.8,
+        //    scale = 1.5
+
         function getUrlParameter(name) {
             var url = new URL(window.location.href);
             return url.searchParams.get(name);
         }
+
         function loadPdf() {
+            console.log()
             var pdfPath = decodeURIComponent(getUrlParameter('pdf'));
-            var pdfContainer = document.getElementById('pdfContainer');
+            console.log(pdfPath)
+            //var pdfContainer = document.getElementById('pdfContainer');
 
             pdfjsLib.GlobalWorkerOptions.workerSrc =
                 "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.10.111/pdf.worker.min.js";
@@ -23,82 +57,61 @@
             pdfjsLib.getDocument(pdfPath).promise.then(function (pdf) {
                 var container = document.getElementById('pdfContainer');
                 for (var pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
-                    pdf.getPage(pageNumber).then(async function (page) {
-                        console.log(page);
-                        var scale = 1.5;
-                        var viewport = page.getViewport({ scale });
+                    console.log(pageNumber);
+                    var num = pageNumber;
+                    pdf.getPage(num).then(function (page) {
+                        var scale = 1.6666666666666665;
+                        var viewport = page.getViewport({ scale: scale });
+
                         var div = document.createElement('div');
-                        console.log(page._pageIndex);
                         div.setAttribute("id", "page-" + (page._pageIndex + 1));
-
-                        // This will keep positions of child elements as per our needs
                         div.setAttribute("style", "position: relative");
-                        //div.setAttribute("style", "height: 500px");
-                        //div.setAttribute("style", "width: 250px");
-
-                        // Append div within div#container
                         container.appendChild(div);
 
-                        var canvas = document.createElement("canvas");
-
-                        // Append Canvas within div#page-#{pdf_page_number}
-                        div.appendChild(canvas);
-
+                        var canvas = document.createElement('canvas');
                         var context = canvas.getContext('2d');
                         canvas.height = viewport.height;
                         canvas.width = viewport.width;
 
+                        div.appendChild(canvas);
+
+                        // Render PDF page into canvas context
                         var renderContext = {
                             canvasContext: context,
                             viewport: viewport
                         };
-                        let textContent = await page.getTextContent();
-                        console.log(textContent);
-
-                    //    // Render PDF page
                         var renderTask = page.render(renderContext);
-                        renderTask.promise
-                            .then(function () {
-                                console.log("222222");
-                            // Get text-fragments
-                            return page.getTextContent().promise;
-                        })
-                            .then(function (textContent) {
-                                // Create div which will hold text-fragments
-                                var textLayerDiv = document.createElement("div");
 
-                                // Set it's class to textLayer which have required CSS styles
-                                textLayerDiv.setAttribute("class", "textLayer");
+                        // Wait for rendering to finish
+                        renderTask.promise.then(function () {
+                            // Returns a promise, on resolving it will return text contents of the page
+                            return page.getTextContent();
+                        }).then(function (textContent) {
+                            console.log(textContent)
 
-                                // Append newly created div in `div#page-#{pdf_page_number}`
-                                div.appendChild(textLayerDiv);
+                            var textLayer = document.createElement("div");
+                            div.setAttribute("class", "textLayer");
+                            //textLayer.setAttribute("style", `--scale-factor: ${viewport.scale}`);
 
-                                // Create new instance of TextLayerBuilder class
-                                var textLayer = new TextLayerBuilder({
-                                    textLayerDiv: textLayerDiv,
-                                    pageIndex: page.pageIndex,
-                                    viewport: viewport
-                                });
+                            console.log(`canvas offset: ${canvas.offsetHeight}`)
 
-                                // Set text-fragments
-                                textLayer.setTextContent(textContent);
+                            textLayer.style.color = "blue";
 
-                                // Render text-fragments
-                                textLayer.render();
+                            //textLayer.style.marginRight= "8000px";
+                            //textLayer.style.top = canvas.offsetTop + 'px';
+                            //textLayer.style.height = canvas.offsetHeight + 'px';
+                            //textLayer.style.width = canvas.offsetWidth + 'px';
+
+                            div.appendChild(textLayer);
+
+                            // Pass the data to the method for rendering of text over the pdf canvas.
+                            pdfjsLib.renderTextLayer({
+                                textContentSource: textContent,
+                                container: textLayer,
+                                viewport: viewport,
+                                textDivs: []
                             });
-
-
-
-                        //var canvas = document.createElement('canvas');
-                        //var context = canvas.getContext('2d');
-                        //var viewport = page.getViewport({ scale: 2 });
-
-                        //canvas.width = viewport.width;
-                        //canvas.height = viewport.height;
-
-                        //pdfContainer.appendChild(canvas);
-
-                        //page.render({ canvasContext: context, viewport: viewport });
+                        });
                     });
                 }
             });
@@ -109,17 +122,6 @@
         });
 
     </script>
-</head>
-<body>
-    <form id="form1" runat="server">
-        <%--<div style="display: flex; justify-content: center; background-color:grey;">--%>
-            <div id='pdfContainer' style="background-color: aliceblue;"></div>
-            <%--<canvas id="the-canvas"></canvas>--%>
-            <%--<div id="the-canvas" style="height: 500px"/>--%>
-            <%--<canvas id="the-canvas" style="border:1px solid black;"></canvas>--%>
-            <%--<iframe src='PDFs/test1.pdf' style="width: 100%;height: 100%;border: none;"></iframe>--%>
-        <%--</div>--%>
-    </form>
 </body>
 </html>
 
