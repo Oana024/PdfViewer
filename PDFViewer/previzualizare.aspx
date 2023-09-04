@@ -5,40 +5,16 @@
 <head runat="server">
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
    <title>Previzualizare PDF</title>
-    <style type="text/css">
-        body{
-        margin: 0; /* Remove default margin */
-    }
-    iframe{      
-        display: block;  /* iframes are inline by default */   
-        height: 100vh;  /* Set height to 100% of the viewport height */   
-        width: 100vw;  /* Set width to 100% of the viewport width */     
-        border: none; /* Remove default border */
-        background: lightyellow; /* Just for styling */
-    }
-        }
-    </style>
-    <%--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf_viewer.css"/>--%>
-    <link type="text/css" href="PDFjs/text_layer_builder.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf_viewer.css"/>
+    <%--<link type="text/css" href="PDFjs/text_layer_builder.css" rel="stylesheet"/>--%>
     <%--<script type="text/javascript" src="PDFjs/text_layer.js"></script>--%>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.10.111/pdf.js"></script>
 </head>
 <body>
     <form id="form1" runat="server">
-        <%--<iframe src="PDFs/test1.pdf"></iframe>--%>
-       <div id="pdfContainer"></div>
-        <%--<div class="textLayer"></div>--%>
-    </form>
-
-
+     <div id="pdfContainer" style="background-color: lightgrey;"></div>
+        </form>
     <script>
-
-        //var pdfDoc = null,
-        //    pageNum = 1,
-        //    //pageRendering = false,
-        //    pageNumPending = null,
-        //    //scale = 0.8,
-        //    scale = 1.5
 
         function getUrlParameter(name) {
             var url = new URL(window.location.href);
@@ -65,7 +41,7 @@
 
                         var div = document.createElement('div');
                         div.setAttribute("id", "page-" + (page._pageIndex + 1));
-                        div.setAttribute("style", "position: relative");
+                        div.setAttribute("style", "position: relative; display: flex; justify-content: center;");
                         container.appendChild(div);
 
                         var canvas = document.createElement('canvas');
@@ -90,17 +66,14 @@
                             console.log(textContent)
 
                             var textLayer = document.createElement("div");
-                            div.setAttribute("class", "textLayer");
-                            //textLayer.setAttribute("style", `--scale-factor: ${viewport.scale}`);
+                            textLayer.setAttribute("class", "textLayer");
+                            textLayer.setAttribute("style", `--scale-factor: ${viewport.scale}`);
 
-                            console.log(`canvas offset: ${canvas.offsetHeight}`)
-
-                            textLayer.style.color = "blue";
-
-                            //textLayer.style.marginRight= "8000px";
-                            //textLayer.style.top = canvas.offsetTop + 'px';
-                            //textLayer.style.height = canvas.offsetHeight + 'px';
-                            //textLayer.style.width = canvas.offsetWidth + 'px';
+                            textLayer.style.position = "absolute";
+                            textLayer.style.left = canvas.offsetLeft + 'px';
+                            textLayer.style.top = canvas.offsetTop + 'px';
+                            textLayer.style.height = canvas.offsetHeight + 'px';
+                            textLayer.style.width = canvas.offsetWidth + 'px';
 
                             div.appendChild(textLayer);
 

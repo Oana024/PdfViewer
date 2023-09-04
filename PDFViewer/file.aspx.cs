@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Web.UI;
-using System.Web.UI.WebControls;
 
 namespace PDFViewer
 {
@@ -11,16 +6,13 @@ namespace PDFViewer
     {
         protected void Page_Load(object sender, EventArgs e)
         {
-            var id = Request.QueryString["id"];
-            if (id == "10")
-            {
                 Response.Clear();
-                Response.WriteFile(@"C:\Users\ioana.mocanu\Downloads\test.pdf");
+                Response.WriteFile(
+                    @"C:/Users/Oana/Downloads/compressed.tracemonkey-pldi-09.pdf");
                 Response.ContentType = "application/pdf";
-                 //var contentDisposition = "attachment; filename=file.pdf";
-                 //Response.Headers["Content-Disposition"] = contentDisposition;
-                Response.End();
-            }
+            var contentDisposition = "attachment; filename=file.pdf";
+            Response.Headers["Content-Disposition"] = contentDisposition;
+            Response.End();
         }
     }
 }
