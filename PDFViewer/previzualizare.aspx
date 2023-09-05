@@ -4,88 +4,159 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
-   <title>Previzualizare PDF</title>
+    <title>Previzualizare PDF</title>
+    <link rel="shortcut icon" href="#" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf_viewer.css"/>
-    <%--<link type="text/css" href="PDFjs/text_layer_builder.css" rel="stylesheet"/>--%>
-    <%--<script type="text/javascript" src="PDFjs/text_layer.js"></script>--%>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.10.111/pdf.js"></script>
+
+    <style>
+        body{
+            margin: 0;
+        }
+
+        #toolbar {
+            background-color: black;
+            height: 50px;
+            width: 100%;
+            position: fixed;
+            z-index:2;
+        }
+
+        #pdfContainer {
+            background-color: lightgrey;
+            padding-top:50px;
+        }
+    </style>
 </head>
 <body>
     <form id="form1" runat="server">
-     <div id="pdfContainer" style="background-color: lightgrey;"></div>
-        </form>
+        <div id="mainContainer">
+            <div id="toolbar">
+                <asp:Button ID="downloadFile" runat="server" Text="Download" OnClick="downloadPdf" />
+                <button type="button" id="PrevPage" onclick="goToPrevPage()">Prev</button>
+                <button type="button" id="NextPage" onclick="goToNextPage()">Next</button>
+                <button type="button" id="zoomIn" onclick="zoomInFile()">Zoom In</button>
+                <button type="button" id="zoomOut" onclick="zoomOutFile()">Zoom Out</button>
+                <p></p>
+            </div>
+            <div id="pdfContainer"></div>
+        </div>
+    </form>
     <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.10.111/pdf.worker.min.js";
+
+        var scale = 1.333333;
+        var container = document.getElementById('pdfContainer');
+        var pageNum = 0;
+        var pageHeight = 0;
+        var numberOfPages = 0;
+        var scrollPosition = 0;
 
         function getUrlParameter(name) {
             var url = new URL(window.location.href);
             return url.searchParams.get(name);
         }
 
-        function loadPdf() {
-            console.log()
-            var pdfPath = decodeURIComponent(getUrlParameter('pdf'));
-            console.log(pdfPath)
-            //var pdfContainer = document.getElementById('pdfContainer');
+        function goToNextPage() {
+            if (pageNum + 1 < numberOfPages) {
+                pageNum++;
+                window.scrollTo(0, pageNum * pageHeight);
+            }
+        }
 
-            pdfjsLib.GlobalWorkerOptions.workerSrc =
-                "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.10.111/pdf.worker.min.js";
+        function goToPrevPage() {
+            if (pageNum - 1 >= 0) {
+                pageNum--;
+                window.scrollTo(0, pageNum * pageHeight);
+            }
+        }
+
+        function zoomInFile() {
+            scale += 0.3;
+            document.getElementById('pdfContainer').innerHTML = ""
+            loadPdf();
+        }
+
+        function zoomOutFile() {
+            scale -= 0.3;
+            document.getElementById('pdfContainer').innerHTML = ""
+            loadPdf();
+        }
+
+
+        document.getElementById('pdfContainer')
+            .addEventListener('wheel', (e) => {
+                if (window.scrollY > (pageNum + 1) * pageHeight) {
+                    pageNum++;
+                }
+                else if (window.scrollY < pageNum * pageHeight) {
+                    pageNum--;
+                }
+                
+                if (e.ctrlKey) {
+                    e.preventDefault();
+                }
+                
+            });
+  
+        function loadPage(pdf, pageNumber) {
+            pdf.getPage(pageNumber).then(function (page) {
+                console.log("viewport:", scale);
+                var viewport = page.getViewport({ scale: scale });
+
+                var div = document.createElement('div');
+                div.setAttribute("id", "page-" + (page._pageIndex + 1));
+                div.setAttribute("style", "position: relative; display: flex; justify-content: center;");
+
+                container.appendChild(div);
+
+                var canvas = document.createElement('canvas');
+                canvas.setAttribute("style", "margin-top: 10px")
+                var context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                pageHeight = canvas.height + 10;
+
+                div.appendChild(canvas);
+
+                var renderContext = {
+                    canvasContext: context,
+                    viewport: viewport
+                };
+                var renderTask = page.render(renderContext);
+
+                renderTask.promise.then(function () {
+                    return page.getTextContent();
+                }).then(function (textContent) {
+
+                    var textLayer = document.createElement("div");
+                    textLayer.setAttribute("class", "textLayer");
+                    textLayer.setAttribute("style", `--scale-factor: ${viewport.scale}`);
+                    textLayer.style.left = canvas.offsetLeft + 'px';
+                    textLayer.style.top = canvas.offsetTop + 'px';
+                    textLayer.style.height = canvas.offsetHeight + 'px';
+                    textLayer.style.width = canvas.offsetWidth + 'px';
+
+                    div.appendChild(textLayer);
+
+                    pdfjsLib.renderTextLayer({
+                        textContentSource: textContent,
+                        container: textLayer,
+                        viewport: viewport,
+                        textDivs: []
+                    });
+                });
+            });
+        }
+
+        function loadPdf() {
+            var pdfPath = decodeURIComponent(getUrlParameter('pdf'));
 
             pdfjsLib.getDocument(pdfPath).promise.then(function (pdf) {
-                var container = document.getElementById('pdfContainer');
+                numberOfPages = pdf.numPages;
                 for (var pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
-                    console.log(pageNumber);
-                    var num = pageNumber;
-                    pdf.getPage(num).then(function (page) {
-                        var scale = 1.6666666666666665;
-                        var viewport = page.getViewport({ scale: scale });
-
-                        var div = document.createElement('div');
-                        div.setAttribute("id", "page-" + (page._pageIndex + 1));
-                        div.setAttribute("style", "position: relative; display: flex; justify-content: center;");
-                        container.appendChild(div);
-
-                        var canvas = document.createElement('canvas');
-                        var context = canvas.getContext('2d');
-                        canvas.height = viewport.height;
-                        canvas.width = viewport.width;
-
-                        div.appendChild(canvas);
-
-                        // Render PDF page into canvas context
-                        var renderContext = {
-                            canvasContext: context,
-                            viewport: viewport
-                        };
-                        var renderTask = page.render(renderContext);
-
-                        // Wait for rendering to finish
-                        renderTask.promise.then(function () {
-                            // Returns a promise, on resolving it will return text contents of the page
-                            return page.getTextContent();
-                        }).then(function (textContent) {
-                            console.log(textContent)
-
-                            var textLayer = document.createElement("div");
-                            textLayer.setAttribute("class", "textLayer");
-                            textLayer.setAttribute("style", `--scale-factor: ${viewport.scale}`);
-
-                            textLayer.style.position = "absolute";
-                            textLayer.style.left = canvas.offsetLeft + 'px';
-                            textLayer.style.top = canvas.offsetTop + 'px';
-                            textLayer.style.height = canvas.offsetHeight + 'px';
-                            textLayer.style.width = canvas.offsetWidth + 'px';
-
-                            div.appendChild(textLayer);
-
-                            // Pass the data to the method for rendering of text over the pdf canvas.
-                            pdfjsLib.renderTextLayer({
-                                textContentSource: textContent,
-                                container: textLayer,
-                                viewport: viewport,
-                                textDivs: []
-                            });
-                        });
-                    });
+                    loadPage(pdf, pageNumber);
                 }
             });
         }
