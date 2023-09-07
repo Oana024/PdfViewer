@@ -71,6 +71,7 @@
     <Content Include="index.aspx" />
     <Content Include="PDFjs\text_layer_builder.css" />
     <Content Include="PDFjs\text_layer_builder.js" />
+    <Content Include="PDFs\toolbar.png" />
     <Content Include="previzualizare.aspx" />
     <Content Include="Web.config" />
   </ItemGroup>
